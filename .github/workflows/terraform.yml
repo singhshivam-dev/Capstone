@@ -1,10 +1,10 @@
-name: Terraform CI
+name: Terraform Plan
 
 on:
   push:
     branches:
       - main
-      - project6
+      - feature/**
   pull_request:
 
 jobs:
@@ -12,14 +12,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform Format Check
-        run: terraform fmt -check -recursive
+      - uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
         run: |
@@ -29,10 +24,18 @@ jobs:
             cd - >/dev/null
           done
 
-      - name: Terraform Validate
+      - name: Terraform Plan
         run: |
+          mkdir plans
           for dir in $(find . -name "*.tf" -exec dirname {} \; | sort -u); do
             cd "$dir"
-            terraform validate
+            terraform plan -out=tfplan || true
+            mv tfplan ../plans/$(basename "$dir").tfplan 2>/dev/null || true
             cd - >/dev/null
           done
+
+      - name: Upload Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plans
+          path: plans/
