@@ -41,3 +41,7 @@ resource "aws_s3_object" "index" {
   source       = "index.html"
   content_type = "text/html"
 }
+
+tags = {
+  Project = "Capstone"
+}
